@@ -1,0 +1,185 @@
+# vi:syntax=sh
+#
+alias lockit="gnome-screensaver-command --lock"
+alias mci="mvn clean install"
+
+RED=`echo -e '\033[101m\033[37m'`
+GREEN=`echo -e '\033[102m'`
+DARK_RED=`echo -e '\033[41m\033[37m'`
+DARK_GREEN=`echo -e '\033[42m'`
+NORMAL=`echo -e '\033[0m'`
+
+
+
+function devTmux(){
+    tmux new-session 
+    tmux new-window
+    tmux split-window -h -c "$HOME/projects/pageroonline"
+    tmux split-window -h
+    tmux -2 attach-session -d 
+}
+
+# pretty color json
+function jcurl(){
+    curl -s $* | jq
+}
+
+alias shedColor="sed \
+      -e 's/==>.*<==/\x1b[95m&\x1b[0m/' \
+        -e 's/^[a-z.]\+\.[A-Za-z]*\(Exception\|Error\):.*/\x1b[93;41m&\x1b[0m/' \
+        -e 's/.*\bERR.*/\x1b[91m&\x1b[0m/' \
+        -e 's/.*\bWARN.*/\x1b[93m&\x1b[0m/' \
+        -e 's/.*\bDEBUG.*/\x1b[96m&\x1b[0m/' \
+        -e 's/^[ \t]\+\bat .*\(pagero\|diamo\|paysol\)[^ ]* .*/\x1b[1m&\x1b[0m/i' \
+        -e 's/^[ \t]\+\bat .*/\x1b[37m&\x1b[0m/i'"
+
+function colortail() {                                                                              
+   tail $* | shedColor
+}
+
+function timeForDeploy(){
+    local image=$1 
+    local commandToRun=$2
+    echo $image: $commandToRun
+    local initialID="$(curl -s localhost:2375/images/${image}/json|sed 's/.*"Created":"\([A-Z0-9:.-]*\)".*/\1/')"
+    while true
+    do
+        local newID="$(curl -s localhost:2375/images/${image}/json|sed 's/.*"Created":"\([A-Z0-9:.-]*\)".*/\1/')"
+        if [[ $newID != $initialID ]]
+        then
+            initialID=$newID
+            echo time to change
+            bash -c "$commandToRun"
+        fi
+        sleep 2
+    done    
+}
+
+func getDebugPort(){
+    local container=$1
+
+    docker inspect $container|jq ".[0].NetworkSettings.Ports.\"7000/tcp\"| .[0].HostPort|tonumber"
+}
+
+func staticDockerPortMapper(){
+    [[ $# -lt 3 ]] && >&2 echo "usage: $0 <container-name/id> <exposed-container-port>/<tcp|udp> <static-port>" && return
+    local container=$1
+    local internalPort=$2
+    local staticPort=$3
+
+    local currentPid=$(lsof -ti :$staticPort 2>/dev/null)
+
+    if [[ -n $currentPid ]]
+    then
+        command=$(ps -h --format %c $currentPid)
+        read -k 1 -r "?Kill process $currentPid/$command already on your static port $staticPort? [y/n]" 
+        echo
+        if [[ $REPLY =~ ^[Yy]$ ]]
+        then
+            kill $currentPid >/dev/null 2>&1 
+        else
+            echo "Well not killing it is probably not going to work but ok..."
+        fi
+    fi
+
+    local pid=
+    local port=
+
+    while true
+    do
+
+        local currentPort=$(docker inspect $container|jq ".[0].NetworkSettings.Ports.\"$internalPort\"| .[0].HostPort|tonumber")
+
+        if [[ ! $? ]]
+        then
+            >&2 echo Port Not Found
+        elif [[ "$currentPort" -ne "$port" ]]
+        then
+            echo "Mapping $currentPort to $staticPort"
+            port="$currentPort"
+
+            [[ -n $pid ]] && echo "Killing old socat command at $pid" && kill "$pid"
+            socat tcp-listen:$staticPort,reuseaddr,fork tcp:localhost:$port &
+        fi
+        sleep 5
+    done
+}
+
+#tmux
+alias tmux="tmux -2"
+
+#git
+alias gsup='git branch --set-upstream-to origin/"$(git-branch-current 2> /dev/null)" "$(git-branch-current 2> /dev/null)"' 
+
+#docker
+alias dimages='docker images|head -10'
+alias dkill='docker kill $(docker ps -q)'
+alias aptupfull='sudo apt-get update && sudo apt-get upgrade && sudo apt-get dist-upgrade'
+
+alias vimgo='docker run -v $GOPATH/src:/go/src -ti byrnedo/go-ide vim'
+
+function dps(){
+    docker ps --format "{{.ID}}\t{{.Image}}\t{{.Labels}}"| \
+    sed -e "s/dockerregistry.pagero.local/d.p.l/" | \
+    sed -e "s/:/ :/" | \
+    column -t | \
+    sed -e "1~2s#/\(.*\):#/$GREEN\1$NORMAL:#" -e "1~2s/:\(.*\)/$RED\1$NORMAL/" | \
+    sed -e "0~1s#/\(.*\):#/$DARK_GREEN\1$NORMAL:#" -e "0~1s/:\(.*\)/$DARK_RED\1$NORMAL/"
+}
+
+function watchDps(){
+    while true
+    do
+        clear && dps
+        echo Last Updated $(date)
+        sleep 2
+    done
+}
+
+function flattenImage(){
+    [[ $# -lt 2 ]] && >&2 echo "usage: $0 <image name> <new image name>" && return;
+    local image=$1
+    local newImage=$2
+    local ID=$(docker run -d $image /bin/bash)
+    echo $ID
+    docker export $ID | docker import - $newImage
+}
+
+function dpull() {
+    for image in $(docker ps --format "{{.Image}}")
+    do
+        docker pull $image
+    done
+}
+
+
+function changeRecipes() {
+    local env=""
+    local workDir=$HOME/.recipe
+
+    if [[ $# -gt 0 ]]
+    then
+        env=$1
+        for file in services overrides filter
+        do
+            echo loading env $env
+            rm -f $workDir/${file}.conf
+            ln -s $workDir/${env}/${file}.conf $workDir/${file}.conf
+        done
+    else
+        echo >&2 "must give environment name"
+        return
+    fi
+}
+
+function _changeRecipesCompletions(){ 
+    local -a options 
+    options=($(cd ~/.recipe && ls -1d */ | sed 's/\/$//'))
+    echo $options
+    _describe 'values' options
+}
+
+
+compdef _changeRecipesCompletions changeRecipes
+
+
