@@ -9,7 +9,13 @@ DARK_RED=`echo -e '\033[41m\033[37m'`
 DARK_GREEN=`echo -e '\033[42m'`
 NORMAL=`echo -e '\033[0m'`
 
+DARK_GREEN_TEXT=`echo -e '\033[32m'`
+LIGHT_CYAN_TEXT=`echo -e '\033[96m'`
 
+function mr(){
+    command mr $* |sed -e "s/\(^mr [a-z]*: \/.*\/\)\(.*\)$/$DARK_GREEN_TEXT\2$NORMAL\n\1\2/" \
+        -e "s/^ \([A-Z]*\) / $LIGHT_CYAN_TEXT\1$NORMAL /"
+}
 
 function devTmux(){
     tmux new-session 
@@ -152,8 +158,29 @@ function dpull() {
     done
 }
 
+function ddangle(){
+    docker rmi $(docker images -q -f dangling=true)
+}
 
-function changeRecipes() {
+function newRecipe() {
+    if [[ $# -gt 0 ]]
+    then
+        [[ -e ~/.recipe/$1 ]] && echo >&2 "Environment already exists" && return
+        mkdir -p  ~/.recipe/$1
+        for type in filter overrides services 
+        do
+            cat <<EOF > ~/.recipe/$1/${type}.conf
+include "../local/${type}.conf"
+EOF
+        done
+        echo "Recipe environment $type created"
+    else
+        echo >&2 "must give environment name"
+        return
+    fi
+}
+
+function changeRecipe() {
     local env=""
     local workDir=$HOME/.recipe
 
@@ -172,7 +199,7 @@ function changeRecipes() {
     fi
 }
 
-function _changeRecipesCompletions(){ 
+function _changeRecipeCompletions(){ 
     local -a options 
     options=($(cd ~/.recipe && ls -1d */ | sed 's/\/$//'))
     echo $options
@@ -180,6 +207,6 @@ function _changeRecipesCompletions(){
 }
 
 
-compdef _changeRecipesCompletions changeRecipes
+compdef _changeRecipeCompletions changeRecipe
 
 
