@@ -11,9 +11,10 @@ NORMAL=`echo -e '\033[0m'`
 
 DARK_GREEN_TEXT=`echo -e '\033[32m'`
 LIGHT_CYAN_TEXT=`echo -e '\033[96m'`
+LIGHT_BLUE=`echo -e '\033[104m'`
 
 function mr(){
-    command mr $* |sed -e "s/\(^mr [a-z]*: \/.*\/\)\(.*\)$/$DARK_GREEN_TEXT\2$NORMAL\n\1\2/" \
+    command mr $* |sed -e "s/\(^mr \)\([a-z]*\)\(: \/.*\/\)\(.*\)$/$DARK_GREEN_TEXT\4$NORMAL\n\1$LIGHT_BLUE\2$NORMAL\3\4/" \
         -e "s/^ \([A-Z]*\) / $LIGHT_CYAN_TEXT\1$NORMAL /"
 }
 
@@ -162,6 +163,10 @@ function ddangle(){
     docker rmi $(docker images -q -f dangling=true)
 }
 
+alias dcompose="docker-compose"
+alias dswarm="docker-swarm"
+alias dmachine="docker-machine"
+
 function newRecipe() {
     if [[ $# -gt 0 ]]
     then
@@ -208,5 +213,12 @@ function _changeRecipeCompletions(){
 
 
 compdef _changeRecipeCompletions changeRecipe
+
+function fd() {
+    
+    local startDir=${FD_GIT_PATH:=.}
+    local dir
+    dir=$(cd $startDir && find . -name *.git -type d  -nowarn 2>/dev/null | sed 's/\(.*\)\/.git/\1/' | fzf) && cd "$startDir/$dir"
+}
 
 
