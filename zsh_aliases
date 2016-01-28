@@ -2,6 +2,7 @@
 #
 alias lockit="gnome-screensaver-command --lock"
 alias mci="mvn clean install"
+alias god="tput cup $(tput lines)"
 
 RED=`echo -e '\033[101m\033[37m'`
 GREEN=`echo -e '\033[102m'`
@@ -216,7 +217,7 @@ compdef _changeRecipeCompletions changeRecipe
 
 function fd() {
     
-    local startDir=${FD_GIT_PATH:=.}
+    local startDir=${FD_SEARCH_PATH:=.}
     local dir
     dir=$(cd $startDir && find . -name *.git -type d  -nowarn 2>/dev/null | sed 's/\(.*\)\/.git/\1/' | fzf) && cd "$startDir/$dir"
 }
