@@ -14,6 +14,11 @@ DARK_GREEN_TEXT=`echo -e '\033[32m'`
 LIGHT_CYAN_TEXT=`echo -e '\033[96m'`
 LIGHT_BLUE=`echo -e '\033[104m'`
 
+#convert md to man page in terminal
+function mandown() {
+    pandoc -s -f markdown -t man $*|man -l - 
+}
+
 function mr(){
     command mr $* |sed -e "s/\(^mr \)\([a-z]*\)\(: \/.*\/\)\(.*\)$/$DARK_GREEN_TEXT\4$NORMAL\n\1$LIGHT_BLUE\2$NORMAL\3\4/" \
         -e "s/^ \([A-Z]*\) / $LIGHT_CYAN_TEXT\1$NORMAL /"
