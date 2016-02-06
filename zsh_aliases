@@ -163,6 +163,7 @@ function ddangle(){
     docker rmi $(docker images -q -f dangling=true)
 }
 
+
 alias dcompose="docker-compose"
 alias dswarm="docker-swarm"
 alias dmachine="docker-machine"
@@ -218,7 +219,7 @@ function fd() {
     
     local startDir=${FD_GIT_PATH:=.}
     local dir
-    dir=$(cd $startDir && find . -name *.git -type d  -nowarn 2>/dev/null | sed 's/\(.*\)\/.git/\1/' | fzf) && cd "$startDir/$dir"
+    dir=$(cd $startDir && find . -name *.git -type d  -nowarn -exec dirname {} \; | fzf) && cd "$startDir/$dir"
 }
 
 
