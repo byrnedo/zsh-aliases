@@ -2,6 +2,7 @@
 #
 alias lockit="gnome-screensaver-command --lock"
 alias mci="mvn clean install"
+alias god="tput cup $(tput lines)"
 
 RED=`echo -e '\033[101m\033[37m'`
 GREEN=`echo -e '\033[102m'`
@@ -12,6 +13,11 @@ NORMAL=`echo -e '\033[0m'`
 DARK_GREEN_TEXT=`echo -e '\033[32m'`
 LIGHT_CYAN_TEXT=`echo -e '\033[96m'`
 LIGHT_BLUE=`echo -e '\033[104m'`
+
+#convert md to man page in terminal
+function mandown() {
+    pandoc -s -f markdown -t man $*|man -l - 
+}
 
 function mr(){
     command mr $* |sed -e "s/\(^mr \)\([a-z]*\)\(: \/.*\/\)\(.*\)$/$DARK_GREEN_TEXT\4$NORMAL\n\1$LIGHT_BLUE\2$NORMAL\3\4/" \
@@ -217,7 +223,7 @@ compdef _changeRecipeCompletions changeRecipe
 
 function fd() {
     
-    local startDir=${FD_GIT_PATH:=.}
+    local startDir=${FD_SEARCH_PATH:=.}
     local dir
     dir=$(cd $startDir && find . -name *.git -type d  -nowarn -exec dirname {} \; | fzf) && cd "$startDir/$dir"
 }
