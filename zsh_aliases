@@ -131,12 +131,9 @@ alias aptupfull='sudo apt-get update && sudo apt-get upgrade && sudo apt-get dis
 alias vimgo='docker run -v $GOPATH/src:/go/src -ti byrnedo/go-ide vim'
 
 function dps(){
-    docker ps --format "{{.ID}}\t{{.Image}}\t{{.Labels}}"| \
-    sed -e "s/dockerregistry.pagero.local/d.p.l/" | \
-    sed -e "s/:/ :/" | \
-    column -t | \
-    sed -e "1~2s#/\(.*\):#/$GREEN\1$NORMAL:#" -e "1~2s/:\(.*\)/$RED\1$NORMAL/" | \
-    sed -e "0~1s#/\(.*\):#/$DARK_GREEN\1$NORMAL:#" -e "0~1s/:\(.*\)/$DARK_RED\1$NORMAL/"
+    docker ps --format "table{{.ID}}\t{{.Names}}\t{{.Image}}"
+    #sed -e "1~2s#/\(.*\):#/$GREEN\1$NORMAL:#" -e "1~2s/:\(.*\)/$RED\1$NORMAL/" | \
+    #sed -e "0~1s#/\(.*\):#/$DARK_GREEN\1$NORMAL:#" -e "0~1s/:\(.*\)/$DARK_RED\1$NORMAL/"
 }
 
 function watchDps(){
@@ -226,6 +223,12 @@ function search_for_git_dirs() {
 
 function fd() {
     local startDir=${FD_SEARCH_PATH:=.}
+    local dir
+    dir=$(FZF_DEFAULT_COMMAND="cd $startDir && find . -name *.git -type d  -nowarn -exec dirname {} \; 2>/dev/null" fzf) && cd "$startDir/$dir"
+}
+
+function sd() {
+    local startDir=${SD_SEARCH_PATH:=.}
     local dir
     dir=$(FZF_DEFAULT_COMMAND="cd $startDir && find . -name *.git -type d  -nowarn -exec dirname {} \; 2>/dev/null" fzf) && cd "$startDir/$dir"
 }
