@@ -13,6 +13,11 @@ DARK_GREEN_TEXT=`echo -e '\033[32m'`
 LIGHT_CYAN_TEXT=`echo -e '\033[96m'`
 LIGHT_BLUE=`echo -e '\033[104m'`
 
+upsCancel(){
+    order=$1
+    curl -s -X POST -d "loc=sv_SE&ordernumber=$order&initiatingPage=statusresponse"  "https://wwwapps.ups.com/pickup/processstatusresults?CANCEL_BUTTON=1&loc=sv_SE" |html2text
+}
+
 #convert md to man page in terminal
 function mandown() {
     pandoc -s -f markdown -t man $*|man -l - 
@@ -126,7 +131,7 @@ alias gsup='git branch --set-upstream-to origin/"$(git-branch-current 2> /dev/nu
 #docker
 alias dimages='docker images|head -10'
 alias dkill='docker kill $(docker ps -q)'
-alias aptupfull='sudo apt-get update && sudo apt-get upgrade && sudo apt-get dist-upgrade'
+alias aptupfull='sudo apt update && sudo apt upgrade && sudo apt dist-upgrade'
 
 alias vimgo='docker run -v $GOPATH/src:/go/src -ti byrnedo/go-ide vim'
 
@@ -224,18 +229,18 @@ function search_for_git_dirs() {
 function fd() {
     local startDir=${FD_SEARCH_PATH:=.}
     local dir
-    dir=$(FZF_DEFAULT_COMMAND="cd $startDir && find . -name *.git -type d  -nowarn -exec dirname {} \; 2>/dev/null" fzf) && cd "$startDir/$dir"
+    dir=$(FZF_DEFAULT_COMMAND="cd $startDir && find .  -path \*/vendor -prune -o -name \*.git -type d  -nowarn -exec dirname {} \;  2>/dev/null" fzf) && cd "$startDir/$dir"
 }
 
 function sd() {
     local startDir=${SD_SEARCH_PATH:=.}
     local dir
-    dir=$(FZF_DEFAULT_COMMAND="cd $startDir && find . -name *.git -type d  -nowarn -exec dirname {} \; 2>/dev/null" fzf) && cd "$startDir/$dir"
+    dir=$(FZF_DEFAULT_COMMAND="cd $startDir && find . -path \*/vendor -prune -o -name \*.git -type d  -nowarn -exec dirname {} \; 2>/dev/null" fzf) && cd "$startDir/$dir"
 }
 
 function god() {
     local dir
-    dir=$(FZF_DEFAULT_COMMAND="cd $GOPATH/src && find . -name *.git -type d  -nowarn -exec dirname {} \; 2>/dev/null" fzf) && cd "$GOPATH/src/$dir"
+    dir=$(FZF_DEFAULT_COMMAND="cd $GOPATH/src && find . -path \*/vendor -prune -o -name \*.git -type d  -nowarn -exec dirname {} \; 2>/dev/null" fzf) && cd "$GOPATH/src/$dir"
 }
 
 
