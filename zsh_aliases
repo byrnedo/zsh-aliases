@@ -13,6 +13,23 @@ DARK_GREEN_TEXT=`echo -e '\033[32m'`
 LIGHT_CYAN_TEXT=`echo -e '\033[96m'`
 LIGHT_BLUE=`echo -e '\033[104m'`
 
+notifyError(){
+    defaultTerm='error'
+    term=${1:-$defaultTerm}
+
+    WINDOWID=
+    while read line
+    do
+        hasError=$(echo $line |grep -i "$term")
+        if [ $hasError ]; then
+            echo "$line"
+            #(sleep 1 &&  DISPLAY=:0  wmctrl -F -a "I am on top" -b add,above) &
+            #(DISPLAY=:0  zenity --notification --text "$line")
+            zenity --notification --text "$line"
+        fi
+    done < "/dev/stdin"
+}
+
 upsCancel(){
     order=$1
     curl -s -X POST -d "loc=sv_SE&ordernumber=$order&initiatingPage=statusresponse"  "https://wwwapps.ups.com/pickup/processstatusresults?CANCEL_BUTTON=1&loc=sv_SE" |html2text
@@ -229,18 +246,18 @@ function search_for_git_dirs() {
 function fd() {
     local startDir=${FD_SEARCH_PATH:=.}
     local dir
-    dir=$(FZF_DEFAULT_COMMAND="cd $startDir && find .  -path \*/vendor -prune -o -name \*.git -type d  -nowarn -exec dirname {} \;  2>/dev/null" fzf) && cd "$startDir/$dir"
+    dir=$(FZF_DEFAULT_COMMAND="cd $startDir && find .  -path \*/node_modules -prune -o -path \*/bower_components -prune -o -path \*/vendor -prune -o -name \*.git -type d  -nowarn -exec dirname {} \;  2>/dev/null" fzf) && cd "$startDir/$dir"
 }
 
 function sd() {
     local startDir=${SD_SEARCH_PATH:=.}
     local dir
-    dir=$(FZF_DEFAULT_COMMAND="cd $startDir && find . -path \*/vendor -prune -o -name \*.git -type d  -nowarn -exec dirname {} \; 2>/dev/null" fzf) && cd "$startDir/$dir"
+    dir=$(FZF_DEFAULT_COMMAND="cd $startDir && find . -path \*/node_modules -prune -o -path \*/bower_components -prune -o -path \*/vendor -prune -o -name \*.git -type d  -nowarn -exec dirname {} \; 2>/dev/null" fzf) && cd "$startDir/$dir"
 }
 
 function god() {
     local dir
-    dir=$(FZF_DEFAULT_COMMAND="cd $GOPATH/src && find . -path \*/vendor -prune -o -name \*.git -type d  -nowarn -exec dirname {} \; 2>/dev/null" fzf) && cd "$GOPATH/src/$dir"
+    dir=$(FZF_DEFAULT_COMMAND="cd $GOPATH/src && find . -path \*/node_modules -prune -o -path \*/bower_components -prune -o -path \*/vendor -prune -o -name \*.git -type d  -nowarn -exec dirname {} \; 2>/dev/null" fzf) && cd "$GOPATH/src/$dir"
 }
 
 
