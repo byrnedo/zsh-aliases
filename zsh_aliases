@@ -240,24 +240,33 @@ function _changeRecipeCompletions(){
 compdef _changeRecipeCompletions changeRecipe
 
 function search_for_git_dirs() {
-    cd $1 && find . -name *.git -type d  -nowarn -exec dirname {} \; 2>/dev/null
+    cd $1 && find . -name *.git -type d  -exec dirname {} \; 2>/dev/null
+}
+
+function _startDir(){
+    local startDir=$1
+    echo "cd $startDir && find .  -path \*/node_modules -prune -o -path \*/bower_components -prune -o -path \*/vendor -prune -o -name \*.git -type d -exec dirname {} \;  2>/dev/null"
 }
 
 function fd() {
-    local startDir=${FD_SEARCH_PATH:=.}
+    local startDir="${FD_SEARCH_PATH:=.}"
+    local defCmd=$(_startDir "$startDir")
     local dir
-    dir=$(FZF_DEFAULT_COMMAND="cd $startDir && find .  -path \*/node_modules -prune -o -path \*/bower_components -prune -o -path \*/vendor -prune -o -name \*.git -type d  -nowarn -exec dirname {} \;  2>/dev/null" fzf) && cd "$startDir/$dir"
+    dir=$(FZF_DEFAULT_COMMAND="$defCmd" fzf) && cd "$startDir/$dir"
 }
 
 function sd() {
     local startDir=${SD_SEARCH_PATH:=.}
     local dir
-    dir=$(FZF_DEFAULT_COMMAND="cd $startDir && find . -path \*/node_modules -prune -o -path \*/bower_components -prune -o -path \*/vendor -prune -o -name \*.git -type d  -nowarn -exec dirname {} \; 2>/dev/null" fzf) && cd "$startDir/$dir"
+    local defCmd=$(_startDir "$startDir")
+    dir=$(FZF_DEFAULT_COMMAND="$defCmd" fzf) && cd "$startDir/$dir"
 }
 
 function god() {
     local dir
-    dir=$(FZF_DEFAULT_COMMAND="cd $GOPATH/src && find . -path \*/node_modules -prune -o -path \*/bower_components -prune -o -path \*/vendor -prune -o -name \*.git -type d  -nowarn -exec dirname {} \; 2>/dev/null" fzf) && cd "$GOPATH/src/$dir"
+    local startDir="${GOPATH}/src"
+    local defCmd=$(_startDir "$startDir")
+    dir=$(FZF_DEFAULT_COMMAND="$defCmd" fzf) && cd "$startDir/$dir"
 }
 
 
