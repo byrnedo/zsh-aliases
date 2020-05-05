@@ -1,7 +1,6 @@
 # vi:syntax=sh
 #
 alias lockit="gnome-screensaver-command --lock"
-alias mci="mvn clean install"
 
 RED=`echo -e '\033[101m\033[37m'`
 GREEN=`echo -e '\033[102m'`
@@ -30,19 +29,10 @@ notifyError(){
     done < "/dev/stdin"
 }
 
-upsCancel(){
-    order=$1
-    curl -s -X POST -d "loc=sv_SE&ordernumber=$order&initiatingPage=statusresponse"  "https://wwwapps.ups.com/pickup/processstatusresults?CANCEL_BUTTON=1&loc=sv_SE" |html2text
-}
 
 #convert md to man page in terminal
 function mandown() {
     pandoc -s -f markdown -t man $*|man -l - 
-}
-
-function mr(){
-    command mr $* |sed -e "s/\(^mr \)\([a-z]*\)\(: \/.*\/\)\(.*\)$/$DARK_GREEN_TEXT\4$NORMAL\n\1$LIGHT_BLUE\2$NORMAL\3\4/" \
-        -e "s/^ \([A-Z]*\) / $LIGHT_CYAN_TEXT\1$NORMAL /"
 }
 
 function devTmux(){
@@ -69,30 +59,6 @@ alias shedColor="sed \
 
 function colortail() {                                                                              
    tail $* | shedColor
-}
-
-function timeForDeploy(){
-    local image=$1 
-    local commandToRun=$2
-    echo $image: $commandToRun
-    local initialID="$(curl -s localhost:2375/images/${image}/json|sed 's/.*"Created":"\([A-Z0-9:.-]*\)".*/\1/')"
-    while true
-    do
-        local newID="$(curl -s localhost:2375/images/${image}/json|sed 's/.*"Created":"\([A-Z0-9:.-]*\)".*/\1/')"
-        if [[ $newID != $initialID ]]
-        then
-            initialID=$newID
-            echo time to change
-            bash -c "$commandToRun"
-        fi
-        sleep 2
-    done    
-}
-
-func getDebugPort(){
-    local container=$1
-
-    docker inspect $container|jq ".[0].NetworkSettings.Ports.\"7000/tcp\"| .[0].HostPort|tonumber"
 }
 
 func staticDockerPortMapper(){
@@ -192,51 +158,6 @@ alias dcompose="docker-compose"
 alias dswarm="docker-swarm"
 alias dmachine="docker-machine"
 
-function newRecipe() {
-    if [[ $# -gt 0 ]]
-    then
-        [[ -e ~/.recipe/$1 ]] && echo >&2 "Environment already exists" && return
-        mkdir -p  ~/.recipe/$1
-        for type in filter overrides services 
-        do
-            cat <<EOF > ~/.recipe/$1/${type}.conf
-include "../local/${type}.conf"
-EOF
-        done
-        echo "Recipe environment $type created"
-    else
-        echo >&2 "must give environment name"
-        return
-    fi
-}
-
-function changeRecipe() {
-    local env=""
-    local workDir=$HOME/.recipe
-
-    if [[ $# -gt 0 ]]
-    then
-        env=$1
-        for file in services overrides filter
-        do
-            echo loading env $env
-            rm -f $workDir/${file}.conf
-            ln -s $workDir/${env}/${file}.conf $workDir/${file}.conf
-        done
-    else
-        echo >&2 "must give environment name"
-        return
-    fi
-}
-
-function _changeRecipeCompletions(){ 
-    local -a options 
-    options=($(cd ~/.recipe && ls -1d */ | sed 's/\/$//'))
-    echo $options
-    _describe 'values' options
-}
-
-
 compdef _changeRecipeCompletions changeRecipe
 
 function search_for_git_dirs() {
@@ -269,4 +190,6 @@ function god() {
     dir=$(FZF_DEFAULT_COMMAND="$defCmd" fzf) && cd "$startDir/$dir"
 }
 
+
+alias kafkacat="docker run -it --network=host edenhill/kafkacat:1.5.0"
 
