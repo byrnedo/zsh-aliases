@@ -192,4 +192,4 @@ function god() {
 
 
 alias kafkacat="docker run -it --network=host edenhill/kafkacat:1.5.0"
-
+alias k="kubectl"
