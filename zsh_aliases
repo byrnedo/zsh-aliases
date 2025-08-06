@@ -1,6 +1,5 @@
 # vi:syntax=sh
 #
-alias lockit="gnome-screensaver-command --lock"
 
 RED=`echo -e '\033[101m\033[37m'`
 GREEN=`echo -e '\033[102m'`
@@ -29,19 +28,6 @@ notifyError(){
     done < "/dev/stdin"
 }
 
-
-#convert md to man page in terminal
-function mandown() {
-    pandoc -s -f markdown -t man $*|man -l - 
-}
-
-function devTmux(){
-    tmux new-session 
-    tmux new-window
-    tmux split-window -h -c "$HOME/projects/pageroonline"
-    tmux split-window -h
-    tmux -2 attach-session -d 
-}
 
 # pretty color json
 function jcurl(){
@@ -119,8 +105,6 @@ alias dimages='docker images|head -10'
 alias dkill='docker kill $(docker ps -q)'
 alias aptupfull='sudo apt update && sudo apt upgrade && sudo apt dist-upgrade'
 
-alias vimgo='docker run -v $GOPATH/src:/go/src -ti byrnedo/go-ide vim'
-
 function dps(){
     docker ps --format "table{{.ID}}\t{{.Names}}\t{{.Image}}"
     #sed -e "1~2s#/\(.*\):#/$GREEN\1$NORMAL:#" -e "1~2s/:\(.*\)/$RED\1$NORMAL/" | \
@@ -158,8 +142,6 @@ function ddangle(){
 
 
 alias dcompose="docker-compose"
-alias dswarm="docker-swarm"
-alias dmachine="docker-machine"
 
 compdef _changeRecipeCompletions changeRecipe
 
@@ -186,23 +168,16 @@ function sd() {
     dir=$(FZF_DEFAULT_COMMAND="$defCmd" fzf) && cd "$startDir/$dir"
 }
 
-function god() {
-    local dir
-    local startDir="${GOPATH}/src"
-    local defCmd=$(_startDir "$startDir")
-    dir=$(FZF_DEFAULT_COMMAND="$defCmd" fzf) && cd "$startDir/$dir"
-}
 
-
-alias kafkacat="docker run -it --network=host edenhill/kafkacat:1.5.0"
+alias kafkacat="docker run -it --network=host edenhill/kafkacat:latest"
 alias k="kubectl"
-alias migrate='docker run -v $(pwd):/migrations --network host migrate/migrate'
 
 function gtp() {
     tag=$1
     git tag $tag && git push origin $tag
 }
 
-function dokku() {
-    ssh dokku "dokku $*"
+function gtd(){
+    tag=$1
+    git tag -d $tag && git push origin :refs/tags/$tag
 }
